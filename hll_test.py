@@ -2,13 +2,16 @@
 in the context of spark partitions """
 
 import hyperloglog
+import random
 from pyspark import SparkContext
 
 sc = SparkContext("local", "test")
+card = 100
+size = 10000
 
-test = [1,2,2,3,4,4,5,4,6,5]
+test = (random.choice(range(card)) for _ in range(size))
 
-values = sc.parallelize(test, 4)
+values = sc.parallelize(test, 10)
 
 # the actual hll object
 hll = hyperloglog.HyperLogLog(0.01)
@@ -35,5 +38,5 @@ class HLLWrapper(object):
 
 acc = values.mapPartitions(HLLWrapper(hll))
 count = acc.reduce(HLLWrapper.update)
-assert(len(count) == len(set(test)))
 
+assert(len(count) == card)
